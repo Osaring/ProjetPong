@@ -1,16 +1,24 @@
 <html>
  <body>
  </body>
-<script src="game.js"></script>
-<script src="game.display.js"></script>
-<script src="game.control.js"></script>
-<script src="game.keycode.js"></script>
+ <script src="http://localhost:3000/game"></script>
+ <script src="http://localhost:3000/gameDisplay"></script>
+ <script src="http://localhost:3000/gameKeycode"></script>
+ <script src="http://localhost:3000/gameControl"></script>
+ <script src="/socket.io/socket.io.js"></script>
 <script>
 (function () {
   // début du code isolé
   var requestAnimId;
+ var socket = io();
+ var player;
+
   var initialisation = function() {
     // le code de l'initialisation
+
+   socket.on("Joueur attibution", (number)=>{
+    player = number;
+   })
     game.init();
 
     requestAnimId = window.requestAnimationFrame(main); // premier appel de main au rafraîchissement de la page
@@ -19,14 +27,66 @@
   var main = function() {
     // le code du jeu
     game.clearLayer(game.playersBallLayer);
-    game.displayPlayers();
+   if(player==="playerOne"){
+    game.DeplacementPlayer1();
+    socket.emit("deplacement joueur 1", game.playerOne);
+   }
+   if(player==='playerTwo'){
+    game.DeplacementPlayer2();
+    socket.emit("deplacement joueur 2", game.playerTwo);
+   }
+   if(player==='playerThree'){
+    game.DeplacementPlayer3();
+    socket.emit("deplacement joueur 3", game.playerThree);
+   }
+   if(player==='playerFour') {
+    game.DeplacementPlayer4();
+    socket.emit("deplacement joueur 4", game.playerFour);
+   }
+
+
+   game.displayPlayers();
     game.moveBall();
+   /*game.DeplacementPlayer1();//appel de la fonction du mouvement de la raquettes du joueur 1
+   game.DeplacementPlayer2();//appel de la fonction du mouvement de la raquettes du joueur 2
+   game.DeplacementPlayer3();//appel de la fonction du mouvement de la raquettes du joueur 3
+   game.DeplacementPlayer4();//appel de la fonction du mouvement de la raquettes du joueur 4*/
+
+   socket.on("Mise a jour de la position du joueur 1",(player)=>{
+    game.playerOne.posY = player.posY;
+   })
+   socket.on("Mise a jour de la position du joueur 2",(player)=>{
+    game.playerTwo.posY = player.posY;
+   })
+   socket.on("Mise a jour de la position du joueur 3",(player)=>{
+    game.playerThree.posY = player.posY;
+   })
+   socket.on("Mise a jour de la position du joueur 4",(player)=>{
+    game.playerFour.posY = player.posY;
+   })
+
+   socket.emit("Mouvement de la balle", game.ball);
+
+   socket.on("Mise a jour de la position de la balle", (ball)=>{
+    game.ball.posX = ball.posX;
+    game.ball.posY = ball.posY;
+    game.ball.directionX = ball.directionX;
+    game.ball.directionY = ball.directionY;
+   })
+
+   game.displayPlayers();//appel de l'afficahge des joueur pour ne pas être effacé par la fonction d'effacement du layer
+   game.moveBall(); // appel de la fonction du mouvement de la balle
+   game.collideBallWithPlayersAndAction();//appel de la fonction du rebonds de la balle sur les raquettes
     requestAnimId = window.requestAnimationFrame(main); // rappel de main au prochain rafraîchissement de la page
   }
   
   window.onload = initialisation; // appel de la fonction initialisation au chargement de la page
-  
-  // fin du code isolé
+
+ window.onkeydown = game.control.onKeyDown; // onKeyDown = à l'appui de la touche
+
+ window.onkeyup = game.control.onKeyUp; // onKeyUp = au relèvement de la touche
+
+ // fin du code isolé
 })();
 </script> 
 </html>
